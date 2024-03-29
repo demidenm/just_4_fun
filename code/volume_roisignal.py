@@ -80,7 +80,7 @@ def extract_time_series_values(behave_df: pd.DataFrame, time_series_array: np.nd
     return np.array(extracted_series_list)
 
 
-def extract_time_series(bold_paths: list, roi_type: str, high_pass_sec: int, roi_mask: str = None,
+def extract_time_series(bold_paths: list, roi_type: str, high_pass_sec: int = None, roi_mask: str = None,
                         roi_coords: tuple = None, radius_mm: int = None, bold_tr: float = None, detrend=True,
                         fwhm_smooth: float = None):
     """
@@ -106,16 +106,16 @@ def extract_time_series(bold_paths: list, roi_type: str, high_pass_sec: int, roi
         raise ValueError("Invalid ROI type. Choose 'mask' or 'coordinates'.")
 
     if roi_type == 'mask':
-        masker = NiftiLabelsMasker(labels_img=roi_mask, standardize='psc', resampling_target='data',
-                                   detrend=detrend, high_pass=1/high_pass_sec,
+        masker = NiftiLabelsMasker(labels_img=roi_mask, standardize='psc', resampling_target='data', detrend=detrend,
+                                   high_pass=1/high_pass_sec if high_pass_sec is not None else None,
                                    t_r=bold_tr, smoothing_fwhm=fwhm_smooth)
         time_series = [masker.fit_transform(i) for i in bold_paths]
         return time_series
 
     else:
         masker_coord = NiftiSpheresMasker(seeds=[roi_coords], radius=radius_mm,
-                                          standardize='psc', resampling_target='data',
-                                          detrend=detrend, high_pass=1/high_pass_sec,
+                                          standardize='psc', resampling_target='data',detrend=detrend,
+                                          high_pass=1/high_pass_sec if high_pass_sec is not None else None,
                                           t_r=bold_tr, smoothing_fwhm=fwhm_smooth)
         time_series_coord = [masker_coord.fit_transform(i) for i in bold_paths]
         return time_series_coord
