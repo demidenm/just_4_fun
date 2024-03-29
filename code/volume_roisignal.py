@@ -4,6 +4,18 @@ import numpy as np
 from nilearn.maskers import NiftiLabelsMasker, NiftiSpheresMasker
 
 
+def round_cust(x):
+    """
+    Customizing rounding so timing values / TR that are between TRs, e.g. 203.60/.800 == 254.5
+    are rounded up. np.floor returns all no zero decimal places down. By adding .5 this returns the intended values
+    Parameters:
+        x (float): value that needs to be rounded
+    Returns:
+        performs rounding to avoid bakers method that is observed in .round() and consistent rounding down in np.floor()
+    """
+    return np.floor(x + 0.5)
+
+
 def trlocked_events(events_path: str, onsets_column: str, trial_name: str,
                     bold_tr: float, bold_vols: int, separator: str = '\t'):
     """
@@ -30,7 +42,8 @@ def trlocked_events(events_path: str, onsets_column: str, trial_name: str,
         raise KeyError(f"Missing columns: {', '.join(missing_cols)}")
 
     beh_df = beh_df[[onsets_column, trial_name]]
-    beh_df["TimePoint"] = (beh_df[onsets_column] / bold_tr).round()
+    beh_df["TimePoint"] = round_cust(
+        beh_df[onsets_column] / bold_tr)  # Per Elizabeth, avoids bakers roundings in .round()
 
     time_index = pd.RangeIndex(start=0, stop=bold_vols, step=1)
     time_index_df = pd.DataFrame(index=time_index)
